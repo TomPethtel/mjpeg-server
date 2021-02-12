@@ -109,7 +109,7 @@ export class MjpegProxy {
               let response = md5(HA1 + ":" + nonce + ":00000001:" + cnonce + ":" + qop + ":" + HA2);
             
               self.mjpegOptions.headers.Authorization = "Digest username=\"" + user + "\",realm=\"" + realm + "\",nonce=\"" + nonce + "\",uri=\"" + self.mjpegOptions.path + "\",cnonce=\"" + cnonce + "\",nc=00000001,algorithm=MD5,response=\"" + response + "\",qop=\"" + qop + "\"";
-              self.proxyRequest();
+              self.proxyRequest(self.mjpegOptions, res);
             } else {
               console.error("status code failed!!");
               cb("status code failed!!", null);
@@ -132,14 +132,14 @@ export class MjpegProxy {
     }
 
     self.proxyRequest = function (req, res) {
-      if (res.socket == null) {
-        return;
-      }
+      // if (res.socket == null) {
+      //   return;
+      // }
       // Send source MJPEG request
-        self.mjpegRequest = http.request(self.mjpegOptions, function (mjpegResponse) {
+        self.mjpegRequest = http.request(req, function (mjpegResponse) {
         console.log('request');
         console.log(`STATUS: ${mjpegResponse.statusCode}`);
-        console.log(`HEADERS: ${JSON.stringify(rmjpegResponsees.headers)}`);
+        console.log(`HEADERS: ${JSON.stringify(mjpegResponse.headers)}`);
         self.globalMjpegResponse = mjpegResponse;
         self.boundary = extractBoundary(mjpegResponse.headers['content-type']);
 
