@@ -64,7 +64,7 @@ export class MjpegProxy {
     self.globalMjpegResponse = null;
     self.mjpegRequest = null;
 
-    self.outerRequest = function (outerReq, res) {
+    self.outerRequest = function (outerReq, outerRes) {
         self.emit("streamstart", "[MjpegProxy] Started streaming " + mjpegUrl + " , users: " + (self.audienceResponses.length + 1));
 
         // There is already another client consuming the MJPEG response
@@ -109,7 +109,7 @@ export class MjpegProxy {
               
               self.mjpegOptions.headers = outerReq.headers
               self.mjpegOptions.headers.Authorization = "Digest username=\"" + user + "\",realm=\"" + realm + "\",nonce=\"" + nonce + "\",uri=\"" + self.mjpegOptions.path + "\",cnonce=\"" + cnonce + "\",nc=00000001,algorithm=MD5,response=\"" + response + "\",qop=\"" + qop + "\"";
-              self.proxyRequest(self.mjpegOptions, res);
+              self.proxyRequest(self.mjpegOptions, outerRes);
             } else {
               console.error("status code failed!!");
               cb("status code failed!!", null);
@@ -143,7 +143,7 @@ export class MjpegProxy {
         self.globalMjpegResponse = mjpegResponse;
         self.boundary = extractBoundary(mjpegResponse.headers['content-type']);
 
-        self._newClient(req, mjpegResponse);
+        self._newClient(req, res);
 
         var lastByte1 = null;
         var lastByte2 = null;
