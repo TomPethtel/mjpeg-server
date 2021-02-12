@@ -64,13 +64,13 @@ export class MjpegProxy {
     self.globalMjpegResponse = null;
     self.mjpegRequest = null;
 
-    self.outerRequest = function (req, res) {
+    self.outerRequest = function (outerReq, res) {
         self.emit("streamstart", "[MjpegProxy] Started streaming " + mjpegUrl + " , users: " + (self.audienceResponses.length + 1));
 
         // There is already another client consuming the MJPEG response
         if (self.mjpegRequest !== null) {
 
-          self._newClient(req, res);
+          self._newClient(outerReq, res);
         } else {
           const req = http.request(self.mjpegOptions, (res) => {
             console.log(`STATUS: ${res.statusCode}`);
@@ -78,7 +78,6 @@ export class MjpegProxy {
             console.log(`RES HEADERS: ${JSON.stringify(res.headers)}`);
             
             if (res.statusCode == 401) {
-              self.mjpegOptions.headers = {};
               let cnonce = md5(String(new Date().getTime()));
               let auth = res.headers["www-authenticate"];
               let realm, nonce, qop;
@@ -105,9 +104,10 @@ export class MjpegProxy {
               }			
                     
               let HA1 = md5(user + ":" + realm + ":" + pass);
-              let HA2 = md5(self.mjpegOptions.method + ":" + self.mjpegOptions.path);
+              let HA2 = md5(outerReq.method + ":" + self.mjpegOptions.path);
               let response = md5(HA1 + ":" + nonce + ":00000001:" + cnonce + ":" + qop + ":" + HA2);
-            
+              
+              self.mjpegOptions.headers = outerReq.headers
               self.mjpegOptions.headers.Authorization = "Digest username=\"" + user + "\",realm=\"" + realm + "\",nonce=\"" + nonce + "\",uri=\"" + self.mjpegOptions.path + "\",cnonce=\"" + cnonce + "\",nc=00000001,algorithm=MD5,response=\"" + response + "\",qop=\"" + qop + "\"";
               self.proxyRequest(self.mjpegOptions, res);
             } else {
@@ -143,7 +143,7 @@ export class MjpegProxy {
         self.globalMjpegResponse = mjpegResponse;
         self.boundary = extractBoundary(mjpegResponse.headers['content-type']);
 
-        self._newClient(req, res);
+        self._newClient(req, mjpegResponse);
 
         var lastByte1 = null;
         var lastByte2 = null;
